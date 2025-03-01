@@ -1,0 +1,570 @@
+---
+
+
+definitions:
+  name: Definitions
+  description: >
+    Descriptions of terms used within this file and their meaning or desired interpretation.
+  value:
+
+    - name: "App"
+      value: >
+        When we refer to this project by the name App, we imply the entire terminal-based
+        todo list manager as manifested within the current git repository.
+
+    - name: "Status"
+      description: >
+        The status of a feature or component.
+      value:
+        - name: 'idea'
+          value: 'An idea for a feature or component'
+        - name: 'in-progress'
+          value: 'A feature or component that is being worked on'
+        - name: 'partial'
+          value: 'A feature or component that is partially complete'
+        - name: 'review'
+          value: 'A feature or component that is being reviewed by the user'
+        - name: 'done'
+          value: 'A feature or component that is complete'
+
+    - name: "Todo"
+      value: >
+        A single task item with a title, optional description, completion state, and optional
+        due date. The atomic unit of the [[App]].
+
+    - name: "List"
+      value: >
+        A named collection of [[Todo]] items. Users organize their work into one or more
+        lists (e.g. "Work", "Personal", "Shopping").
+
+    - name: "Service"
+      value: >
+        The top-level deployable unit — a single compiled Go binary that runs in the terminal.
+
+    - name: "Subsystem"
+      value: >
+        A sufficiently large collection of logic and functionality that it needs to be
+        separately managed. A named grouping of [[Module]] elements within a [[Service]].
+
+    - name: "Module"
+      value: >
+        A non-visual component that serves as an organizational block of code and
+        functionality. Belongs to a [[Subsystem]].
+
+    - name: "Pane"
+      value: >
+        A rectangular region of the terminal rendered by a Bubble Tea Model. The TUI
+        equivalent of a visual Component. Belongs to [[TUILayer]].
+
+    - name: "DataModel"
+      value: >
+        The shape of data managed by the [[App]] — manifests as Go structs.
+        Transferred between [[Module]] and [[Pane]] layers.
+
+    - name: "Storage"
+      value: >
+        Persistent capture of [[DataModel]]. In this [[App]], a JSON file on disk at
+        `~/.local/share/taskly-tui/todos.json`.
+
+    - name: "State"
+      value: >
+        In-memory representation of [[DataModel]], kept in sync with [[Storage]] via
+        [[TodoStore]].
+
+    - name: "Feature"
+      value: >
+        A core operation, presentation, or behavior essential to the user's experience.
+
+    - name: "Flourish"
+      value: >
+        A visual or ergonomic enhancement layered on top of a [[Feature]]. The
+        underlying [[Feature]] remains accessible without the flourish.
+
+    - name: "Keybinding"
+      value: >
+        A keyboard shortcut that triggers an action. In a TUI, keybindings are the
+        primary interaction model — not a [[Flourish]], but a first-class design concern.
+
+
+general:
+  name: General
+  description: 'General information about the product'
+  value:
+
+    - name: 'Name'
+      value: 'Taskly TUI'
+      description: 'Product name used for branding and identification'
+
+    - name: 'description'
+      value: >
+        A minimal, fast terminal user interface for managing personal todo lists.
+        Create lists, add tasks, check them off, and stay on top of what matters —
+        all from the command line with no mouse required.
+      description: 'Concise explanation of what the product is and its primary purpose'
+
+    - name: 'motivation'
+      value: >
+        Developers and power users live in the terminal. Taskly TUI exists so a todo
+        manager is always one keypress away inside the same environment where work happens,
+        without switching context to a browser or Electron app.
+      description: 'Core reason this product exists and the problem it solves'
+
+    - name: 'target_audience'
+      value: >
+        Developers, sysadmins, and CLI power users who prefer keyboard-driven workflows
+        and want a task manager that feels native to the terminal.
+      description: 'Primary user segments the product is designed to serve'
+
+    - name: 'scope'
+      value: >
+        Single-user, single-machine. All data persisted locally as a JSON file.
+        No backend, no authentication, no sync in v1. Runs on Linux and macOS terminals.
+      description: 'What is explicitly in and out of scope for this version'
+
+
+technical:
+  name: Technical
+  description: 'Technology stack — interpreted as an allowlist and set of defaults for implementation.'
+  value:
+
+    - name: 'Primary Language'
+      description: 'Compiled, statically typed systems language'
+      value: Go
+
+    - name: 'TUI Framework'
+      description: 'Elm-inspired Model/Update/View framework for terminal UIs'
+      value: Bubble Tea (github.com/charmbracelet/bubbletea)
+
+    - name: 'Styling'
+      description: 'Terminal styling and layout via ANSI codes — the CSS of the terminal'
+      value: Lip Gloss (github.com/charmbracelet/lipgloss)
+
+    - name: 'Input Handling'
+      description: 'Composable text input component for Bubble Tea'
+      value: Bubbles (github.com/charmbracelet/bubbles)
+
+    - name: 'Persistence'
+      description: 'Human-readable flat file; no database dependency'
+      value: JSON file via encoding/json
+
+    - name: 'Date Handling'
+      description: 'Go standard library — no external dependency needed'
+      value: time (stdlib)
+
+    - name: 'Build & Distribution'
+      description: 'Single statically linked binary; installable via go install'
+      value: go build / goreleaser
+
+    - name: 'Testing'
+      description: 'Unit tests for modules; integration tests for store mutations and file I/O'
+      value: go test (stdlib) + testify (github.com/stretchr/testify)
+
+
+# ─── ARCHITECTURAL TREE ───────────────────────────────────────────────────────
+#
+#   Service
+#     └── Subsystems
+#           ├── PersistenceSubsystem
+#           │     ├── JSONFileAdapter   (Module)
+#           │     └── TodoStore         (Module)
+#           └── TUILayer
+#                 ├── AppModel          (Pane / root Bubble Tea model)
+#                 │     ├── ListPane    (Pane)
+#                 │     ├── TodoPane    (Pane)
+#                 │     ├── EditPane    (Pane — inline overlay)
+#                 │     └── StatusBar   (Pane)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+architectural:
+  name: Architectural
+  description: 'Software engineering constraints and component tree'
+  value:
+
+    # ── Service (root) ────────────────────────────────────────────────────────
+
+    - name: 'TasklyTUIService'
+      description: 'Service'
+      value: >
+        The single compiled Go binary. Launched from the terminal, takes over the full
+        terminal window via Bubble Tea's alternate screen. Composed of two [[Subsystem]]
+        elements: [[PersistenceSubsystem]] and [[TUILayer]].
+      status: 'idea'
+
+    # ── Subsystems ────────────────────────────────────────────────────────────
+
+    - name: 'PersistenceSubsystem'
+      description: 'Subsystem of TasklyTUIService'
+      value: >
+        A [[Subsystem]] of [[TasklyTUIService]] responsible for all data durability.
+        Contains [[JSONFileAdapter]] and [[TodoStore]].
+        Nothing outside this subsystem reads or writes [[Storage]] directly.
+      status: 'idea'
+
+    - name: 'TUILayer'
+      description: 'Subsystem of TasklyTUIService'
+      value: >
+        A [[Subsystem]] of [[TasklyTUIService]] responsible for all terminal rendering and
+        keyboard input handling. Built on Bubble Tea's Model/Update/View loop.
+        Contains [[AppModel]] and all [[Pane]] elements beneath it.
+        Reads [[State]] from [[TodoStore]].
+      status: 'idea'
+
+    # ── Modules (PersistenceSubsystem) ───────────────────────────────────────
+
+    - name: 'JSONFileAdapter'
+      description: 'Module in PersistenceSubsystem'
+      value: >
+        A [[Module]] of [[PersistenceSubsystem]] that reads and writes the [[Storage]] file.
+        Given the file exists, must deserialize it into the [[DataModel]] structs.
+        Given the file is absent or empty, must return an empty state without error.
+        Given a write, must serialize atomically (write to a temp file, then rename) to
+        prevent data loss on crash. Exposes two operations: Load and Save.
+      status: 'idea'
+
+    - name: 'TodoStore'
+      description: 'Module in PersistenceSubsystem'
+      value: >
+        A [[Module]] of [[PersistenceSubsystem]] and the central [[State]] manager.
+        Holds all [[List]] and [[Todo]] [[DataModel]] in memory.
+        Exposes mutation methods (AddTodo, EditTodo, CompleteTodo, DeleteTodo, ReorderTodo,
+        AddList, RenameList, DeleteList). Every mutation must call [[JSONFileAdapter]].Save
+        before returning. Passed into [[TUILayer]] at startup via dependency injection.
+      status: 'idea'
+
+    # ── Panes (TUILayer) ──────────────────────────────────────────────────────
+
+    - name: 'AppModel'
+      description: 'Pane in TUILayer — root Bubble Tea model'
+      value: >
+        The root Bubble Tea Model for [[TUILayer]]. Owns the terminal window.
+        Renders [[ListPane]] on the left, [[TodoPane]] on the right, and [[StatusBar]]
+        at the bottom. Routes keyboard events to the focused pane. Manages focus state
+        (which pane is active) and overlays [[EditPane]] when editing is triggered.
+      status: 'idea'
+
+    - name: 'ListPane'
+      description: 'Pane in AppModel'
+      value: >
+        A [[Pane]] within [[AppModel]]. Displays all [[List]] names from [[TodoStore]].
+        The active [[List]] is highlighted. Arrow keys navigate between lists.
+        Supports inline rename and delete via [[Keybinding]] actions.
+        Shows a count of incomplete [[Todo]] items next to each list name.
+      status: 'idea'
+
+    - name: 'TodoPane'
+      description: 'Pane in AppModel'
+      value: >
+        A [[Pane]] within [[AppModel]]. Displays the [[Todo]] items of the active [[List]].
+        Incomplete items appear first; completed items sink to the bottom with a strikethrough.
+        Hosts an always-visible input line at the top for adding new [[Todo]] items.
+        Arrow keys or j/k navigate between items.
+      status: 'idea'
+
+    - name: 'EditPane'
+      description: 'Pane in AppModel — inline overlay'
+      value: >
+        A [[Pane]] within [[AppModel]], rendered as a centered overlay when a [[Todo]]
+        is being edited. Contains three focusable fields: title (required), description
+        (optional multiline), and due date (optional, free-text parsed by the time stdlib).
+        Pressing Enter on the last field or Ctrl+S saves to [[TodoStore]] and dismisses
+        the overlay. Pressing Escape discards changes.
+      status: 'idea'
+
+    - name: 'StatusBar'
+      description: 'Pane in AppModel'
+      value: >
+        A [[Pane]] within [[AppModel]]. A single line rendered at the bottom of the screen.
+        Displays context-sensitive [[Keybinding]] hints for the currently focused pane
+        on the left, and transient messages (e.g. "Deleted: Buy milk — z to undo") on
+        the right. Messages auto-clear after 4 seconds.
+      status: 'idea'
+
+
+# ─── FEATURES TREE ───────────────────────────────────────────────────────────
+#
+#   Capability
+#     └── Feature
+#           └── Sub-feature
+#
+#   Capabilities:
+#     ├── Bootstrapping          → App Bootstrap
+#     ├── Task Lifecycle         → Add Todo
+#     │                              └── Quick Capture (sub)
+#     │                          → Complete Todo
+#     │                              └── Completed Items Sink (sub)
+#     │                          → Edit Todo
+#     │                              └── Due Date Display (sub)
+#     │                          → Delete Todo
+#     │                              └── Undo Delete (sub)
+#     │                          → Reorder Todo (sub)
+#     └── List Organization      → List Management
+#                                    ├── Todo Count (sub)
+#                                    └── Clear Completed (sub)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+features:
+  name: Features
+  description: 'Key capabilities organized by capability, feature, and sub-feature'
+  value:
+
+    # ── Capability: Bootstrapping ─────────────────────────────────────────────
+
+    - name: 'Bootstrapping'
+      description: 'Capability'
+      value: >
+        Getting the user into a working state instantly on first run and on every
+        subsequent launch. Gates: [[JSONFileAdapter]], [[TodoStore]].
+      status: 'idea'
+
+      value:
+        - name: 'App Bootstrap'
+          description: 'Feature in Bootstrapping'
+          value: >
+            A [[Feature]] under [[Bootstrapping]].
+            On first launch [[TodoStore]] calls [[JSONFileAdapter]].Load. If the result
+            is empty, it seeds a default [[List]] named "My Tasks" with two example [[Todo]]
+            items so the user lands on a non-empty screen. On subsequent launches, it
+            rehydrates full [[State]] from the JSON file. The terminal window must be
+            ready for input within 100ms of launch on a modern machine.
+          status: 'idea'
+
+    # ── Capability: Task Lifecycle ────────────────────────────────────────────
+
+    - name: 'Task Lifecycle'
+      description: 'Capability'
+      value: >
+        Everything to do with creating, tracking, and resolving a single [[Todo]].
+        Gates: [[TodoPane]], [[EditPane]], [[TodoStore]].
+      status: 'idea'
+
+      value:
+        - name: 'Add Todo'
+          description: 'Feature in Task Lifecycle'
+          value: >
+            A [[Feature]] under [[Task Lifecycle]].
+            The top line of [[TodoPane]] is a persistent input field. Typing a title and
+            pressing Enter appends a new [[Todo]] to the active [[List]] in [[TodoStore]]
+            and clears the input. The new item must appear at the top of the incomplete
+            section immediately without a reload.
+          status: 'idea'
+
+          value:
+            - name: 'Quick Capture'
+              description: 'Sub-feature of Add Todo'
+              value: >
+                A sub-feature of [[Add Todo]].
+                Pressing `a` from anywhere in [[AppModel]] must immediately focus the
+                input line in [[TodoPane]], switching focus from [[ListPane]] if needed.
+                Allows title entry without navigating first.
+              status: 'idea'
+
+        - name: 'Complete Todo'
+          description: 'Feature in Task Lifecycle'
+          value: >
+            A [[Feature]] under [[Task Lifecycle]].
+            With a [[TodoItem]] focused in [[TodoPane]], pressing Space toggles its
+            completion state in [[TodoStore]]. Completed items must render with a
+            strikethrough title and muted color. Given the toggle succeeds, the
+            [[StatusBar]] must briefly confirm "Marked done: <title>".
+          status: 'idea'
+
+          value:
+            - name: 'Completed Items Sink'
+              description: 'Sub-feature of Complete Todo'
+              value: >
+                A sub-feature of [[Complete Todo]].
+                [[TodoPane]] must re-sort its list after every completion toggle:
+                incomplete items stay at the top in their existing order; completed items
+                collect at the bottom in their existing order. The focused cursor must
+                follow the item to its new position.
+              status: 'idea'
+
+        - name: 'Edit Todo'
+          description: 'Feature in Task Lifecycle'
+          value: >
+            A [[Feature]] under [[Task Lifecycle]].
+            Pressing `e` on a focused [[TodoItem]] opens [[EditPane]] as an overlay.
+            The user may update the title (required, must not be blank), add or edit
+            an optional description, and set or clear an optional due date.
+            Pressing Ctrl+S or Enter on the last field saves to [[TodoStore]] and
+            dismisses [[EditPane]]. Pressing Escape discards all changes.
+          status: 'idea'
+
+          value:
+            - name: 'Due Date Display'
+              description: 'Sub-feature of Edit Todo'
+              value: >
+                A sub-feature of [[Edit Todo]].
+                If a [[Todo]] carries a due date, [[TodoPane]] must render a small date
+                string after the title. Overdue dates must appear in red; dates within
+                24 hours in amber; future dates in muted text. The color must update
+                on every render without user action.
+              status: 'idea'
+
+        - name: 'Delete Todo'
+          description: 'Feature in Task Lifecycle'
+          value: >
+            A [[Feature]] under [[Task Lifecycle]].
+            Pressing `d` on a focused [[TodoItem]] removes it from [[TodoStore]]
+            immediately. No confirmation prompt — the action is undoable via [[Undo Delete]].
+            [[StatusBar]] must display a timed undo prompt within one render frame.
+          status: 'idea'
+
+          value:
+            - name: 'Undo Delete'
+              description: 'Sub-feature of Delete Todo'
+              value: >
+                A sub-feature of [[Delete Todo]].
+                After deletion, [[StatusBar]] shows "Deleted: <title>  z = undo" for 4 seconds.
+                Pressing `z` within that window must restore the [[Todo]] to its original
+                index in [[TodoStore]] and cancel the status message. After 4 seconds the
+                undo window must close silently.
+              status: 'idea'
+
+        - name: 'Reorder Todo'
+          description: 'Feature in Task Lifecycle'
+          value: >
+            A [[Feature]] under [[Task Lifecycle]].
+            With a [[TodoItem]] focused, pressing Ctrl+Up or Ctrl+Down moves it one
+            position within the incomplete section of [[TodoPane]]. Completed items
+            cannot be reordered. The new order must persist to [[TodoStore]] immediately.
+          status: 'idea'
+
+    # ── Capability: List Organization ─────────────────────────────────────────
+
+    - name: 'List Organization'
+      description: 'Capability'
+      value: >
+        Grouping and managing multiple [[List]] objects so the user can separate contexts.
+        Gates: [[ListPane]], [[TodoStore]].
+      status: 'idea'
+
+      value:
+        - name: 'List Management'
+          description: 'Feature in List Organization'
+          value: >
+            A [[Feature]] under [[List Organization]].
+            From [[ListPane]]: pressing `n` creates a new [[List]] and immediately enters
+            inline rename mode; pressing `r` renames the focused [[List]] inline; pressing
+            `d` deletes the focused [[List]] and all its [[Todo]] items after a single
+            confirmation keystroke (`y`); arrow keys or j/k navigate between lists.
+            All changes persist to [[TodoStore]].
+          status: 'idea'
+
+          value:
+            - name: 'Todo Count'
+              description: 'Sub-feature of List Management'
+              value: >
+                A sub-feature of [[List Management]].
+                [[ListPane]] must display the count of incomplete [[Todo]] items next to
+                each [[List]] name. The count must update on every state change without
+                requiring focus. When the count is zero the badge must be hidden.
+              status: 'idea'
+
+            - name: 'Clear Completed'
+              description: 'Sub-feature of List Management'
+              value: >
+                A sub-feature of [[List Management]].
+                When the active [[List]] contains at least one completed [[Todo]],
+                [[StatusBar]] must show "X to clear completed". Pressing `X` (uppercase)
+                removes all completed items from [[TodoStore]] at once. The action is
+                not undoable — it is destructive by design.
+              status: 'idea'
+
+
+# ─── FLOURISHES FOREST ───────────────────────────────────────────────────────
+#
+#   Each tree is an independent design concern, built top-down.
+#   Every leaf is gated by the feature it enhances.
+#
+#   ├── Visual Design (system)
+#   │     ├── Color Palette (pattern)
+#   │     │     ├── Due Date Color Coding    (detail) → gates on Due Date Display
+#   │     │     └── Active Pane Border       (detail) → gates on App Bootstrap
+#   │     └── Typography (pattern)
+#   │           └── Strikethrough Completed  (detail) → gates on Complete Todo
+#   │
+#   └── Ergonomics (system)
+#         └── Help Overlay (pattern)       → gates on App Bootstrap
+#
+# ─────────────────────────────────────────────────────────────────────────────
+flourishes:
+  name: Flourishes
+  description: 'Visual polish and ergonomic enhancements, organized as independent trees'
+  value:
+
+    # ── Tree: Visual Design ───────────────────────────────────────────────────
+
+    - name: 'Visual Design'
+      description: 'Design system tree'
+      value: >
+        The overarching visual design system for [[App]]. Governs color and typography
+        via Lip Gloss styles applied consistently across all [[Pane]] elements.
+        Contains [[Color Palette]] and [[Typography]] patterns.
+
+      value:
+        - name: 'Color Palette'
+          description: 'Pattern in Visual Design'
+          value: >
+            A pattern within [[Visual Design]]. Defines the named color tokens used by
+            all [[Pane]] elements. Colors must degrade gracefully on 8-color terminals
+            by falling back to the nearest ANSI color. Contains [[Due Date Color Coding]]
+            and [[Active Pane Border]] as details.
+
+          value:
+            - name: 'Due Date Color Coding'
+              description: 'Detail in Color Palette'
+              value: >
+                A detail of [[Color Palette]], enhancing [[Due Date Display]].
+                Overdue dates must render in the palette's red token; dates within
+                24 hours in the amber token; future dates in the muted token.
+                Must use the same token values defined in [[Color Palette]] — no hardcoded
+                ANSI codes in [[TodoPane]].
+              status: 'idea'
+
+            - name: 'Active Pane Border'
+              description: 'Detail in Color Palette'
+              value: >
+                A detail of [[Color Palette]], enhancing [[App Bootstrap]].
+                The focused [[Pane]] (either [[ListPane]] or [[TodoPane]]) must render
+                its Lip Gloss border in the palette's accent color. Unfocused panes
+                must render their border in the muted color. Must update on every
+                focus change without flicker.
+              status: 'idea'
+
+        - name: 'Typography'
+          description: 'Pattern in Visual Design'
+          value: >
+            A pattern within [[Visual Design]]. Defines text styling conventions:
+            bold for headings and active items, dim for secondary text and completed
+            items, italic for descriptions and due dates.
+
+          value:
+            - name: 'Strikethrough Completed'
+              description: 'Detail in Typography'
+              value: >
+                A detail of [[Typography]], enhancing [[Complete Todo]].
+                Completed [[Todo]] titles must render with a Lip Gloss strikethrough
+                style and the muted color token from [[Color Palette]].
+                Must apply on the same render frame as the completion toggle.
+              status: 'idea'
+
+    # ── Tree: Ergonomics ──────────────────────────────────────────────────────
+
+    - name: 'Ergonomics'
+      description: 'Design system tree'
+      value: >
+        Ergonomic enhancements that reduce the learning curve without changing core
+        behavior. Contains [[Help Overlay]] as a pattern.
+
+      value:
+        - name: 'Help Overlay'
+          description: 'Pattern in Ergonomics'
+          value: >
+            A pattern within [[Ergonomics]], enhancing [[App Bootstrap]].
+            Pressing `?` from anywhere in [[AppModel]] must render a full-screen overlay
+            listing all [[Keybinding]] actions grouped by context (global, list, todo,
+            edit). Pressing `?` or Escape again must dismiss it. The overlay must be
+            derived from the same [[Keybinding]] definitions used for [[StatusBar]] hints —
+            no duplicated keybinding documentation.
+          status: 'idea'

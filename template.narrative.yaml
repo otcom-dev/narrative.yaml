@@ -1,0 +1,250 @@
+---
+
+definitions:
+  name: Definitions
+  description: >
+    Descriptions of terms used within this file and their meaning or desired interpretation.
+  value:
+
+    - name: "App"
+      value: >
+        When we refer to this project by the name App, we imply this entire functionality
+        as manifested within the current git repository.  By default every concept is
+        connected to the App unless specifically tied to another concept.
+
+    - name: "Status"
+      description: >
+        The status of a feature or component.
+      value:
+        - name: 'idea'
+          value: 'An idea for a feature or component'
+        - name: 'in-progress'
+          value: 'A feature or component that is being worked on'
+        - name: 'partial'
+          value: 'A feature or component that is partially complete'
+        - name: 'review'
+          value: 'A feature or component that is being reviewed by the user'
+        - name: 'done'
+          value: 'A feature or component that is complete'
+
+    - name: "Framework"
+      value: >
+        A collection of software that is a dependency of an [[App]].
+
+    - name: "Module"
+      value: >
+        A non-visual component of the application that serves as an organizational
+        block of code and functionality.
+
+    - name: "Subsystem"
+      value: >
+        A sufficiently large collection of logic and functionality that it needs to be
+        separately managed. Generally a collection of [[Module]] elements.
+
+    - name: "Service"
+      value: >
+        A networked piece of logic which might consist of multiple [[Subsystem]] and/or [[Module]] elements.
+        Services interact with external systems, APIs, or network resources.
+
+    - name: "Component"
+      value: >
+        A visual UI element that encapsulates display logic. Either from a component library
+        or a custom chunk of frontend code.
+
+    - name: "Page"
+      value: >
+        A screen shown to the user, composed of [[Component]] elements. An existing
+        concept from the selected [[Framework]].
+
+    - name: "DataModel"
+      value: >
+        The shape of data managed by the [[App]], manifested as a struct or interface.
+        The singular unit transferring data between [[Module]], [[Component]], [[Page]], or [[Subsystem]].
+
+    - name: "Storage"
+      value: >
+        The persistent capture of [[DataModel]], generally a database. Usually a [[Subsystem]].
+
+    - name: "State"
+      value: >
+        The in-memory representation of [[DataModel]], sometimes also persisted via [[Storage]].
+
+    - name: "Feature"
+      value: >
+        A core operation, presentation, or behavior of the [[App]] that is essential to the user's experience.
+
+    - name: "Flourish"
+      value: >
+        A decorative or ergonomic enhancement layered on top of a [[Feature]]. Not required for core
+        function — the underlying [[Feature]] is always accessible without it.
+
+
+general:
+  name: General
+  description: 'General information about the product'
+  value:
+
+    - name: 'Name'
+      value: 'Your App Name'
+      description: 'The product name used for branding and identification'
+
+    - name: 'Description'
+      value: 'A one-sentence description of what this product does and for whom.'
+      description: 'Concise explanation of the product and its primary purpose'
+
+    - name: 'Motivation'
+      value: >
+        Why does this product exist? What problem does it solve, and why is this
+        the right approach? What would users do without it?
+      description: 'The core reason this product exists'
+
+    - name: 'Target Audience'
+      value: 'Who are the primary users of this product?'
+      description: 'Primary user segments the product is designed to serve'
+
+
+technical:
+  name: Technical
+  description: 'Technology stack — interpreted as an allowlist and set of defaults for implementation.'
+  value:
+
+    - name: 'Primary Language'
+      description: 'The main programming language'
+      value: 'e.g. TypeScript'
+
+    - name: 'Build Framework'
+      description: 'The application framework'
+      value: 'e.g. Next.js'
+
+    - name: 'UI Framework'
+      description: 'Library for building user interfaces'
+      value: 'e.g. React'
+
+    - name: 'Styling'
+      description: 'CSS approach or framework'
+      value: 'e.g. Tailwind CSS'
+
+    - name: 'Backend Framework'
+      description: 'Server-side platform or framework'
+      value: 'e.g. Express, Firebase, Supabase'
+
+    - name: 'Storage'
+      description: 'Database or persistence layer'
+      value: 'e.g. PostgreSQL, Firestore'
+
+    - name: 'Testing'
+      description: 'Test framework and approach — unit, integration, and e2e'
+      value: 'e.g. Jest + React Testing Library + Playwright'
+
+
+architectural:
+  name: Architectural
+  description: 'Top-down decomposition of the system into Services, Subsystems, and Modules.'
+  value:
+
+    - name: 'ServiceA'
+      value: >
+        The top-level service responsible for [domain]. Composed of [[SubsystemA1]] and [[SubsystemA2]].
+        Exposes [type of interface] to [[ServiceB]] and the [[FrontEnd]].
+      status: 'idea'
+
+      value:
+        - name: 'SubsystemA1'
+          value: >
+            Handles [responsibility] within [[ServiceA]]. Composed of [[ModuleA1a]] and [[ModuleA1b]].
+          status: 'idea'
+
+          value:
+            - name: 'ModuleA1a'
+              value: >
+                Responsible for [specific function]. Given a valid [[DataModel]], must write exactly
+                one record to [[Storage]] and return a success result. Given invalid input, must
+                reject with a typed error without writing to [[Storage]].
+              status: 'idea'
+
+            - name: 'ModuleA1b'
+              value: >
+                Responsible for [specific function]. Given a valid identifier, must read from [[Storage]]
+                and return the corresponding [[DataModel]]. Given an unknown identifier, must return
+                a not-found result rather than throwing.
+              status: 'idea'
+
+        - name: 'SubsystemA2'
+          value: >
+            Handles [responsibility] within [[ServiceA]].
+          status: 'idea'
+
+    - name: 'ServiceB'
+      value: >
+        The top-level service responsible for [domain]. Depends on [[ServiceA]] for [reason].
+      status: 'idea'
+
+
+features:
+  name: Features
+  description: 'Top-down decomposition of capabilities into Features and Sub-features, each referencing the architectural components they touch.'
+  value:
+
+    - name: 'CapabilityA'
+      value: >
+        The top-level capability that allows users to [goal]. Delivered through [[ServiceA]] and displayed via [[FrontEnd]].
+      status: 'idea'
+
+      value:
+        - name: 'Feature A1'
+          value: >
+            Allows the user to [specific action]. Uses [[ModuleA1a]] to [do something] and displays the result via [Component].
+          status: 'idea'
+
+          value:
+            - name: 'Sub-feature A1a'
+              value: >
+                When [condition], the user should be able to [specific interaction].
+                Given the action succeeds, the result must be visible immediately without a page reload.
+                Given the action fails, an inline error message must appear and no data should be lost.
+                Persisted via [[Storage]] through [[ModuleA1b]].
+              status: 'idea'
+
+            - name: 'Sub-feature A1b'
+              value: >
+                When [edge case condition], the UI must handle [[Feature A1]] gracefully —
+                displaying a clear explanation rather than a blank state or crash.
+              status: 'idea'
+
+        - name: 'Feature A2'
+          value: >
+            Allows the user to [specific action]. A follow-on to [[Feature A1]].
+          status: 'idea'
+
+    - name: 'CapabilityB'
+      value: >
+        The top-level capability that allows users to [goal]. Depends on [[CapabilityA]] being in place.
+      status: 'idea'
+
+
+flourishes:
+  name: Flourishes
+  description: 'Ergonomic and aesthetic enhancements layered on top of completed Features. Each flourish is gated by the feature it enhances.'
+  value:
+
+    - name: 'Design Language'
+      value: >
+        The overall visual tone of the [[App]]. Governs color, spacing, typography, and motion defaults
+        applied across all [[Component]] elements.
+
+      value:
+        - name: 'Color Palette'
+          value: >
+            Primary, secondary, and semantic colors (success, warning, error, info) used consistently
+            across all [[Component]] elements.
+
+        - name: 'Motion & Animation'
+          value: >
+            Transition timing and easing defaults. Entrance/exit animations for modals, drawers, and toasts.
+
+    - name: 'Keyboard Navigation'
+      value: >
+        Keyboard shortcuts for common actions within [[CapabilityA]] and [[CapabilityB]].
+        The underlying [[Feature]] must remain fully accessible via mouse/touch — shortcuts are additive only.
+        Given a keyboard shortcut is triggered, the result must be identical to clicking the corresponding control.
+        Given a user has not learned the shortcut, discoverability must be present via a visible tooltip or legend.

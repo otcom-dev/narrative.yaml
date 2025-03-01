@@ -1,0 +1,565 @@
+---
+
+
+definitions:
+  name: Definitions
+  description: >
+    Descriptions of terms used within this file and their meaning or desired interpretation.
+  value:
+
+    - name: "App"
+      value: >
+        When we refer to this project by the name App, we imply the entire todo list manager
+        as manifested within the current git repository.
+
+    - name: "Status"
+      description: >
+        The status of a feature or component.
+      value:
+        - name: 'idea'
+          value: 'An idea for a feature or component'
+        - name: 'in-progress'
+          value: 'A feature or component that is being worked on'
+        - name: 'partial'
+          value: 'A feature or component that is partially complete'
+        - name: 'review'
+          value: 'A feature or component that is being reviewed by the user'
+        - name: 'done'
+          value: 'A feature or component that is complete'
+
+    - name: "Todo"
+      value: >
+        A single task item with a title, optional description, completion state, and optional
+        due date. The atomic unit of the [[App]].
+
+    - name: "List"
+      value: >
+        A named collection of [[Todo]] items. Users organize their work into one or more
+        lists (e.g. "Work", "Personal", "Shopping").
+
+    - name: "Service"
+      value: >
+        The top-level deployable unit. For this [[App]] there is a single service that
+        runs entirely in the browser — no server is required.
+
+    - name: "Subsystem"
+      value: >
+        A sufficiently large collection of logic and functionality that it needs to be
+        separately managed. A named grouping of [[Module]] elements within a [[Service]].
+
+    - name: "Module"
+      value: >
+        A non-visual component of the application that serves as an organizational block
+        of code and functionality. Belongs to a [[Subsystem]].
+
+    - name: "Component"
+      value: >
+        A React component that encapsulates visual display. Belongs to the [[UILayer]].
+
+    - name: "DataModel"
+      value: >
+        The shape of data managed by the [[App]] — manifests as TypeScript interfaces.
+        Transferred between [[Module]] and [[Component]] layers.
+
+    - name: "Storage"
+      value: >
+        Persistent capture of [[DataModel]]. In this [[App]], backed by localStorage.
+
+    - name: "State"
+      value: >
+        In-memory representation of [[DataModel]], kept in sync with [[Storage]] via
+        [[TodoStore]].
+
+    - name: "Feature"
+      value: >
+        A core operation, presentation, or behavior essential to the user's experience.
+
+    - name: "Flourish"
+      value: >
+        An ergonomic or decorative enhancement layered on top of a [[Feature]]. The
+        underlying [[Feature]] remains accessible without the flourish.
+
+    - name: "Keybinding"
+      value: >
+        A keyboard shortcut that triggers an action. 
+
+general:
+  name: General
+  description: 'General information about the product'
+  value:
+
+    - name: 'Name'
+      value: 'Taskly'
+      description: 'Product name used for branding and identification'
+
+    - name: 'description'
+      value: >
+        A minimal, fast web application for managing personal todo lists. Create lists,
+        add tasks, check them off, and stay on top of what matters.
+      description: 'Concise explanation of what the product is and its primary purpose'
+
+    - name: 'motivation'
+      value: >
+        Most todo apps are bloated. Taskly exists to prove that a focused, well-designed
+        task manager can be built quickly following a clear narrative. No accounts required
+        — just open and start adding tasks.
+      description: 'Core reason this product exists and the problem it solves'
+
+    - name: 'target_audience'
+      value: >
+        Individuals who want a lightweight, distraction-free task manager that works in the
+        browser without sign-up friction.
+      description: 'Primary user segments the product is designed to serve'
+
+    - name: 'scope'
+      value: >
+        Single-user, single-browser. All data persisted locally via localStorage. No backend,
+        no authentication, no sync in v1.
+      description: 'What is explicitly in and out of scope for this version'
+
+
+technical:
+  name: Technical
+  description: Core technologies and frameworks that form the foundation of the application.
+  value:
+    - name: Building
+      description: Application framework with file-based routing
+      value: Next.js
+    - name: Primary language
+      description: Strongly typed superset of JavaScript
+      value: TypeScript
+    - name: Styling framework
+      description: Utility-first CSS for rapid UI development
+      value: Tailwind CSS
+    - name: UI framework
+      description: Component-based library for building user interfaces
+      value: React
+    - name: State management
+      description: React Context + useReducer — sufficient for a single-service client app
+      value: React Context
+    - name: Persistence
+      description: Browser-native key-value store; no backend required for v1
+      value: localStorage
+    - name: Component library
+      description: Unstyled, accessible component primitives
+      value: Radix UI
+    - name: Date handling
+      description: Minimal date utility library
+      value: date-fns
+    - name: Testing
+      description: Unit and integration tests for modules and components; e2e for user flows
+      value: Jest + React Testing Library (unit/integration), Playwright (e2e)
+
+
+# ─── ARCHITECTURAL TREE ───────────────────────────────────────────────────────
+#
+#   Service
+#     └── Subsystems
+#           ├── PersistenceSubsystem
+#           │     ├── LocalStorageAdapter  (Module)
+#           │     └── TodoStore            (Module)
+#           └── UILayer
+#                 ├── AppShell             (Module / root layout)
+#                 │     ├── Sidebar        (Component)
+#                 │     └── MainPanel      (Component)
+#                 │           ├── AddTodoInput   (Component)
+#                 │           ├── TodoList       (Component)
+#                 │           │     └── TodoItem (Component)
+#                 │           └── EditTodoModal  (Component)
+#                 └── (more panels added per feature)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+architectural:
+  name: Architectural
+  description: 'Software engineering constraints and component tree'
+  value:
+
+    # ── Service (root) ────────────────────────────────────────────────────────
+
+    - name: 'TasklyService'
+      description: 'Service'
+      value: >
+        The single deployable unit of the [[App]]. Runs entirely in the browser.
+        Composed of two [[Subsystem]] elements: [[PersistenceSubsystem]] and [[UILayer]].
+
+    # ── Subsystems ────────────────────────────────────────────────────────────
+
+    - name: 'PersistenceSubsystem'
+      description: 'Subsystem of TasklyService'
+      value: >
+        A [[Subsystem]] of [[TasklyService]] responsible for all data durability.
+        Contains [[LocalStorageAdapter]] and [[TodoStore]].
+        Nothing outside this subsystem reads or writes [[Storage]] directly.
+
+    - name: 'UILayer'
+      description: 'Subsystem of TasklyService'
+      value: >
+        A [[Subsystem]] of [[TasklyService]] responsible for everything the user sees
+        and interacts with. Contains [[AppShell]] and all [[Component]] elements beneath it.
+        Reads [[State]] from [[TodoStore]] via React Context.
+
+    # ── Modules (PersistenceSubsystem) ───────────────────────────────────────
+
+    - name: 'LocalStorageAdapter'
+      description: 'Module in PersistenceSubsystem'
+      value: >
+        A [[Module]] of [[PersistenceSubsystem]] that wraps browser localStorage.
+        Serializes and deserializes the full app [[State]] as JSON.
+        Exposes three operations: read, write, clear. Nothing else touches localStorage.
+
+    - name: 'TodoStore'
+      description: 'Module in PersistenceSubsystem'
+      value: >
+        A [[Module]] of [[PersistenceSubsystem]] and the central [[State]] manager.
+        Holds all [[List]] and [[Todo]] [[DataModel]] in memory via useReducer.
+        Dispatches actions (add, edit, complete, delete, reorder) and flushes every
+        mutation to [[LocalStorageAdapter]]. Exposed to [[UILayer]] via React Context.
+
+    # ── Modules (UILayer) ─────────────────────────────────────────────────────
+
+    - name: 'AppShell'
+      description: 'Module in UILayer — root layout'
+      value: >
+        A [[Module]] of [[UILayer]] and the root layout [[Component]].
+        Renders [[Sidebar]] on the left and [[MainPanel]] on the right.
+        Handles responsive breakpoints and mounts the React Context provider for [[TodoStore]].
+
+    - name: 'Sidebar'
+      description: 'Component in AppShell'
+      value: >
+        A [[Component]] within [[AppShell]].
+        Displays all [[List]] names from [[TodoStore]]. Lets the user create, rename,
+        delete, and switch the active [[List]]. Shows a [[TodoCountBadge]] next to each
+        list name.
+
+    - name: 'MainPanel'
+      description: 'Component in AppShell'
+      value: >
+        A [[Component]] within [[AppShell]]. Displays the contents of the currently active
+        [[List]]. Hosts [[AddTodoInput]] at the top, [[TodoList]] in the body, and
+        [[EditTodoModal]] as an overlay.
+
+    - name: 'AddTodoInput'
+      description: 'Component in MainPanel'
+      value: >
+        A [[Component]] within [[MainPanel]].
+        An always-visible text input for quickly appending a new [[Todo]] to the active
+        [[List]] in [[TodoStore]] by pressing Enter.
+
+    - name: 'TodoList'
+      description: 'Component in MainPanel'
+      value: >
+        A [[Component]] within [[MainPanel]].
+        Renders the ordered set of [[TodoItem]] components for the active [[List]].
+        Incomplete items appear first; completed items sink to the bottom.
+
+    - name: 'TodoItem'
+      description: 'Component in TodoList'
+      value: >
+        A [[Component]] within [[TodoList]].
+        Renders a single [[Todo]]: checkbox, title, optional due-date badge, and an
+        edit/delete action menu. Dispatches completion toggles and deletions to [[TodoStore]].
+
+    - name: 'EditTodoModal'
+      description: 'Component in MainPanel'
+      value: >
+        A [[Component]] within [[MainPanel]]. A modal dialog for editing a single [[Todo]].
+        Allows updating title (required), free-text description, and due date.
+        Saves changes to [[TodoStore]] on confirm.
+
+
+# ─── FEATURES TREE ───────────────────────────────────────────────────────────
+#
+#   Pillar / Theme
+#     └── Feature
+#           └── Sub-feature
+#
+#   Pillars:
+#     ├── Bootstrapping          → App Bootstrap
+#     ├── Task Lifecycle         → Add Todo
+#     │                              ├── Quick Capture (sub)
+#     │                          → Complete Todo
+#     │                              └── Completed Items Sink (sub)
+#     │                          → Edit Todo
+#     │                              └── Due Date Display (sub)
+#     │                          → Delete Todo
+#     │                              └── Undo Delete (sub)
+#     └── List Organization      → List Management
+#                                    ├── Todo Count Badge (sub)
+#                                    └── Clear Completed (sub)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+features:
+  name: Features
+  description: 'Key capabilities organized by pillar, feature, and sub-feature'
+  value:
+
+    # ── Pillar: Bootstrapping ─────────────────────────────────────────────────
+
+    - name: 'Bootstrapping'
+      description: 'Pillar'
+      value: >
+        Getting the user into a working state instantly, whether it is their first visit
+        or a return session. Gates: [[LocalStorageAdapter]], [[TodoStore]].
+      status: 'idea'
+
+    - name: 'App Bootstrap'
+      description: 'Feature in Bootstrapping'
+      value: >
+        A [[Feature]] under [[Bootstrapping]].
+        On first load [[TodoStore]] checks [[LocalStorageAdapter]] for existing data.
+        If empty, seeds two example [[Todo]] items in a default [[List]] named "My Tasks"
+        so the user lands on a non-empty screen. On return visits, rehydrates state
+        from [[LocalStorageAdapter]].
+      status: 'idea'
+      shortname: 'AppBootstrap'
+
+    # ── Pillar: Task Lifecycle ────────────────────────────────────────────────
+
+    - name: 'Task Lifecycle'
+      description: 'Pillar'
+      value: >
+        Everything to do with creating, tracking, and resolving a single [[Todo]].
+        Gates: [[AddTodoInput]], [[TodoItem]], [[EditTodoModal]], [[TodoStore]].
+      status: 'idea'
+
+    - name: 'Add Todo'
+      description: 'Feature in Task Lifecycle'
+      value: >
+        A [[Feature]] under [[Task Lifecycle]].
+        [[AddTodoInput]] accepts a title. Confirming appends a new [[Todo]] to the active
+        [[List]] in [[TodoStore]] and clears the input. The new item appears at the top of
+        [[TodoList]].
+      status: 'idea'
+      shortname: 'AddTodo'
+
+    - name: 'Quick Capture'
+      description: 'Sub-feature of Add Todo'
+      value: >
+        A sub-feature of [[Add Todo]].
+        Pressing the `n` key from anywhere in the [[App]] focuses [[AddTodoInput]]
+        immediately so the user can type a title without reaching for the mouse.
+      status: 'idea'
+
+    - name: 'Complete Todo'
+      description: 'Feature in Task Lifecycle'
+      value: >
+        A [[Feature]] under [[Task Lifecycle]].
+        Each [[TodoItem]] has a checkbox. Clicking it toggles the [[Todo]] completion
+        state in [[TodoStore]]. Completed items show a strikethrough title and muted color.
+      status: 'idea'
+      shortname: 'CompleteTodo'
+
+    - name: 'Completed Items Sink'
+      description: 'Sub-feature of Complete Todo'
+      value: >
+        A sub-feature of [[Complete Todo]].
+        [[TodoList]] automatically re-sorts after a completion toggle: incomplete items
+        remain at the top, completed items collect at the bottom, preserving their relative
+        order within each group.
+      status: 'idea'
+
+    - name: 'Edit Todo'
+      description: 'Feature in Task Lifecycle'
+      value: >
+        A [[Feature]] under [[Task Lifecycle]].
+        Clicking the edit action on a [[TodoItem]] opens [[EditTodoModal]]. The user may
+        update the title (required), add or edit an optional description, and set or clear
+        an optional due date. Saving writes changes to [[TodoStore]] and closes the modal.
+      status: 'idea'
+      shortname: 'EditTodo'
+
+    - name: 'Due Date Display'
+      description: 'Sub-feature of Edit Todo'
+      value: >
+        A sub-feature of [[Edit Todo]].
+        If a [[Todo]] carries a due date, [[TodoItem]] renders a small date badge below the
+        title. Past dates are shown in red; dates within 24 hours in amber; future dates in
+        muted text. Color coding requires no user action — it is derived from the date value.
+      status: 'idea'
+      shortname: 'DueDateDisplay'
+
+    - name: 'Delete Todo'
+      description: 'Feature in Task Lifecycle'
+      value: >
+        A [[Feature]] under [[Task Lifecycle]].
+        A delete action on a [[TodoItem]] removes the [[Todo]] from [[TodoStore]]
+        immediately. No confirmation dialog — the action is undoable via [[Undo Delete]].
+      status: 'idea'
+      shortname: 'DeleteTodo'
+
+    - name: 'Undo Delete'
+      description: 'Sub-feature of Delete Todo'
+      value: >
+        A sub-feature of [[Delete Todo]].
+        After a deletion a transient toast appears for 5 seconds with an "Undo" button.
+        Clicking Undo restores the [[Todo]] to its original position in [[TodoStore]].
+        The toast auto-dismisses if ignored.
+      status: 'idea'
+      shortname: 'UndoDelete'
+
+    # ── Pillar: List Organization ─────────────────────────────────────────────
+
+    - name: 'List Organization'
+      description: 'Pillar'
+      value: >
+        Grouping and managing multiple [[List]] objects so the user can separate contexts
+        (work, personal, etc.). Gates: [[Sidebar]], [[TodoStore]].
+      status: 'idea'
+
+    - name: 'List Management'
+      description: 'Feature in List Organization'
+      value: >
+        A [[Feature]] under [[List Organization]].
+        From [[Sidebar]] the user can: create a [[List]] via a "+ New list" button; rename
+        a [[List]] by double-clicking its name; delete a [[List]] and all its [[Todo]] items
+        via a context menu; and switch the active [[List]] by clicking its name.
+        All changes persist to [[TodoStore]] which flushes to [[LocalStorageAdapter]].
+      status: 'idea'
+      shortname: 'ListManagement'
+
+    - name: 'Todo Count Badge'
+      description: 'Sub-feature of List Management'
+      value: >
+        A sub-feature of [[List Management]].
+        Each [[List]] entry in [[Sidebar]] displays a small badge showing the count of
+        incomplete [[Todo]] items in that list. The badge is hidden when the count is zero.
+      status: 'idea'
+      shortname: 'TodoCountBadge'
+
+    - name: 'Clear Completed'
+      description: 'Sub-feature of List Management'
+      value: >
+        A sub-feature of [[List Management]].
+        A "Clear completed" link appears at the bottom of [[TodoList]] when at least one
+        [[Todo]] in the active [[List]] is marked complete. Clicking it removes all completed
+        items from [[TodoStore]] at once.
+      status: 'idea'
+      shortname: 'ClearCompleted'
+
+
+# ─── FLOURISHES FOREST ───────────────────────────────────────────────────────
+#
+#   Each tree is an independent design concern, built top-down.
+#   Every leaf is gated by the feature it enhances.
+#
+#   ├── Interaction Design (system)
+#   │     ├── Keyboard Shortcuts (pattern)
+#   │     │     ├── Global Hotkeys        (detail) → gates on Quick Capture
+#   │     │     └── Item Hotkeys          (detail) → gates on Complete/Edit/Delete Todo
+#   │     └── Drag to Reorder            (pattern) → gates on List Management
+#   │
+#   └── Visual Design (system)
+#         ├── Motion Language (pattern)
+#         │     └── Completion Animation  (detail) → gates on Complete Todo
+#         ├── Color Theming (pattern)
+#         │     ├── Due Date Color Coding (detail) → gates on Due Date Display
+#         │     └── Dark Mode             (detail) → gates on App Bootstrap
+#         └── Empty State                (pattern) → gates on List Management
+#
+# ─────────────────────────────────────────────────────────────────────────────
+flourishes:
+  name: Flourishes
+  description: 'Design language and micro-interactions, organized as independent trees'
+  value:
+
+    # ── Tree: Interaction Design ──────────────────────────────────────────────
+
+    - name: 'Interaction Design'
+      description: 'Design system tree'
+      value: >
+        The overarching interaction design system for [[App]]. Governs how the user
+        manipulates data without friction. Contains the [[Keyboard Shortcuts]] pattern
+        and the [[Drag to Reorder]] pattern.
+
+    - name: 'Keyboard Shortcuts'
+      description: 'Pattern in Interaction Design'
+      value: >
+        A pattern within [[Interaction Design]].
+        Power users can operate [[App]] without a mouse. Broken into [[Global Hotkeys]]
+        for app-level actions and [[Item Hotkeys]] for [[TodoItem]]-level actions.
+
+    - name: 'Global Hotkeys'
+      description: 'Detail in Keyboard Shortcuts'
+      value: >
+        A detail of [[Keyboard Shortcuts]], enhances [[Quick Capture]].
+        - `n` — focus [[AddTodoInput]]
+        - `Escape` — close any open modal or dismiss the active toast
+        - `Cmd/Ctrl+Z` — trigger [[Undo Delete]] if a toast is visible
+      status: 'idea'
+
+    - name: 'Item Hotkeys'
+      description: 'Detail in Keyboard Shortcuts'
+      value: >
+        A detail of [[Keyboard Shortcuts]]. Enhances [[Complete Todo]], [[Edit Todo]],
+        and [[Delete Todo]]. When a [[TodoItem]] is focused:
+        - `Space` — toggle completion
+        - `e` — open [[EditTodoModal]]
+        - `Delete` / `Backspace` — delete the item
+      status: 'idea'
+
+    - name: 'Drag to Reorder'
+      description: 'Pattern in Interaction Design'
+      value: >
+        A pattern within [[Interaction Design]], enhancing [[List Management]].
+        Incomplete [[Todo]] items within [[TodoList]] can be reordered by dragging.
+        A drag handle icon appears on hover at the left of each [[TodoItem]].
+        Dropping persists the new order to [[TodoStore]].
+      status: 'idea'
+
+    # ── Tree: Visual Design ───────────────────────────────────────────────────
+
+    - name: 'Visual Design'
+      description: 'Design system tree'
+      value: >
+        The overarching visual design system for [[App]]. Governs color, motion, and
+        empty-state presentation. Contains [[Motion Language]], [[Color Theming]], and
+        [[Empty State]] patterns.
+
+    - name: 'Motion Language'
+      description: 'Pattern in Visual Design'
+      value: >
+        A pattern within [[Visual Design]]. Defines the timing and easing vocabulary for
+        all animated transitions in [[App]]. Currently contains one detail:
+        [[Completion Animation]].
+
+    - name: 'Completion Animation'
+      description: 'Detail in Motion Language'
+      value: >
+        A detail of [[Motion Language]], enhancing [[Complete Todo]].
+        When a [[TodoItem]] is checked, the strikethrough animates across the title text
+        over 200 ms, then the item slides to the bottom of [[TodoList]] with a 150 ms
+        ease-out transition rather than jumping.
+      status: 'idea'
+
+    - name: 'Color Theming'
+      description: 'Pattern in Visual Design'
+      value: >
+        A pattern within [[Visual Design]]. Defines the color palette and theme-switching
+        behavior. Contains [[Due Date Color Coding]] and [[Dark Mode]] as details.
+
+    - name: 'Due Date Color Coding'
+      description: 'Detail in Color Theming'
+      value: >
+        A detail of [[Color Theming]], enhancing [[Due Date Display]].
+        The [[TodoItem]] due date badge uses semantic color from the [[Color Theming]] palette:
+        red for overdue, amber for due within 24 hours, muted for future dates.
+      status: 'idea'
+
+    - name: 'Dark Mode'
+      description: 'Detail in Color Theming'
+      value: >
+        A detail of [[Color Theming]], enhancing [[App Bootstrap]].
+        [[AppShell]] respects the OS-level `prefers-color-scheme` media query and switches
+        Tailwind themes automatically. A manual toggle in [[Sidebar]] footer overrides the
+        OS preference; the override is persisted via [[LocalStorageAdapter]].
+      status: 'idea'
+
+    - name: 'Empty State'
+      description: 'Pattern in Visual Design'
+      value: >
+        A pattern within [[Visual Design]], enhancing [[List Management]].
+        When the active [[List]] has no [[Todo]] items (or all are complete), [[MainPanel]]
+        shows a centered illustration and an encouraging message ("Nothing left to do!")
+        instead of a blank area. No sub-details — the pattern is a single atomic component.
+      status: 'idea'
