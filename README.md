@@ -26,13 +26,13 @@ See [template.narrative.yaml](template.narrative.yaml) for a full reference see 
 Copy the [`CLAUDE.md`](CLAUDE.md) from this repo into your project root. It instructs Claude to read `@docs/narrative.yaml` automatically at the start of every session and follow the implementation DAG, derive tests from `value` fields, and stay within your declared tech stack.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/otcom-oss/narrative.yaml/main/CLAUDE.md -o CLAUDE.md
+curl -sL https://raw.githubusercontent.com/otcom-dev/narrative.yaml/main/CLAUDE.md -o CLAUDE.md
 ```
 
 To bootstrap your project with the example file:
 
 ```bash
-mkdir -p docs && curl -sL https://raw.githubusercontent.com/otcom-oss/narrative.yaml/main/template.narrative.yaml -o docs/narrative.yaml
+mkdir -p docs && curl -sL https://raw.githubusercontent.com/otcom-dev/narrative.yaml/main/template.narrative.yaml -o docs/narrative.yaml
 ```
 
 Or browse the `examples/` directory for full worked examples:
