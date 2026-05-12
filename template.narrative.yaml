@@ -1,4 +1,5 @@
 ---
+title: Template Narrative
 
 definitions:
   name: Definitions
@@ -143,19 +144,21 @@ architectural:
   value:
 
     - name: 'ServiceA'
-      value: >
+      type: 'Service'
+      description: >
         The top-level service responsible for [domain]. Composed of [[SubsystemA1]] and [[SubsystemA2]].
         Exposes [type of interface] to [[ServiceB]] and the [[FrontEnd]].
       status: 'idea'
 
       value:
         - name: 'SubsystemA1'
-          value: >
+          type: 'Subsystem'
+          description: >
             Handles [responsibility] within [[ServiceA]]. Composed of [[ModuleA1a]] and [[ModuleA1b]].
           status: 'idea'
-
           value:
             - name: 'ModuleA1a'
+              type: 'Module'
               value: >
                 Responsible for [specific function]. Given a valid [[DataModel]], must write exactly
                 one record to [[Storage]] and return a success result. Given invalid input, must
@@ -163,6 +166,7 @@ architectural:
               status: 'idea'
 
             - name: 'ModuleA1b'
+              type: 'Module'
               value: >
                 Responsible for [specific function]. Given a valid identifier, must read from [[Storage]]
                 and return the corresponding [[DataModel]]. Given an unknown identifier, must return
@@ -170,11 +174,13 @@ architectural:
               status: 'idea'
 
         - name: 'SubsystemA2'
+          type: 'Subsystem'
           value: >
             Handles [responsibility] within [[ServiceA]].
           status: 'idea'
 
     - name: 'ServiceB'
+      type: 'Service'
       value: >
         The top-level service responsible for [domain]. Depends on [[ServiceA]] for [reason].
       status: 'idea'
@@ -186,16 +192,15 @@ features:
   value:
 
     - name: 'CapabilityA'
-      value: >
+      description: >
         The top-level capability that allows users to [goal]. Delivered through [[ServiceA]] and displayed via [[FrontEnd]].
       status: 'idea'
 
       value:
         - name: 'Feature A1'
-          value: >
+          description: >
             Allows the user to [specific action]. Uses [[ModuleA1a]] to [do something] and displays the result via [Component].
           status: 'idea'
-
           value:
             - name: 'Sub-feature A1a'
               value: >
@@ -228,7 +233,7 @@ flourishes:
   value:
 
     - name: 'Design Language'
-      value: >
+      description: >
         The overall visual tone of the [[App]]. Governs color, spacing, typography, and motion defaults
         applied across all [[Component]] elements.
 

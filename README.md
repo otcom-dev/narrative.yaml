@@ -21,6 +21,14 @@ We are documenting the vibes across specialties such that an LLM can write all t
 
 See [template.narrative.yaml](template.narrative.yaml) for a full reference see the example file.
 
+### Using with Claude Code
+
+Copy the [`CLAUDE.md`](CLAUDE.md) from this repo into your project root. It instructs Claude to read `@docs/narrative.yaml` automatically at the start of every session and follow the implementation DAG, derive tests from `value` fields, and stay within your declared tech stack.
+
+```bash
+curl -sL https://raw.githubusercontent.com/otcom-oss/narrative.yaml/main/CLAUDE.md -o CLAUDE.md
+```
+
 To bootstrap your project with the example file:
 
 ```bash
@@ -123,6 +131,29 @@ The `value` field of every item is also its implicit test specification — no s
 - **`flourishes` items** → visual and interaction tests. The `value` describes how an enhancement should look or behave. An LLM should derive visual regression or interaction tests from these descriptions.
 
 Write `value` descriptions in testable language — "must", "should", "given X returns Y", "when Z happens then W is visible" — so that both humans and LLMs can read the narrative and know exactly what to verify.
+
+
+## Linting
+
+You can validate your `narrative.yaml` file with [yamllint](https://yamllint.readthedocs.io/). Because narrative files use long prose `value` fields, disable the line-length rule:
+
+```bash
+yamllint -d '{extends: default, rules: {line-length: disable}}' docs/narrative.yaml
+```
+
+Or add a `.yamllint.yaml` to your project root:
+
+```yaml
+extends: default
+rules:
+  line-length: disable
+```
+
+Then run:
+
+```bash
+yamllint docs/narrative.yaml
+```
 
 
 ## Projects Adhering to Narrative (yaml)
