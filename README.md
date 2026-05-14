@@ -17,6 +17,10 @@ This document is:
 
 We are documenting the vibes across specialties such that an LLM can write all the code -- this is an interdisciplinary project/product narrative.  It basically **IS** the software in English where the micro-decisions are left to the implementation loop.
 
+
+Additional Motivation:
+ - Microsoft Research is showing 25% corruption by foundation models [LLMs Corrupt Your Documents When You Delegate](https://arxiv.org/abs/2604.15597)
+
 ## Getting Started
 
 See [template.narrative.yaml](template.narrative.yaml) for a full reference see the example file.
