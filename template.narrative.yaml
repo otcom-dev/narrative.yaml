@@ -9,9 +9,16 @@ definitions:
 
     - name: "App"
       value: >
-        When we refer to this project by the name App, we imply this entire functionality
-        as manifested within the current git repository.  By default every concept is
-        connected to the App unless specifically tied to another concept.
+        A deployable software application/runtime (for example web app, desktop app, mobile app,
+        or backend service host). An [[App]] is an architectural primitive and not equivalent
+        to the full project scope, which may also include libraries, packages, or tooling.
+
+    - name: "System"
+      value: >
+        A bounded software whole composed of one or more [[App]], [[Service]], library,
+        and/or infrastructure elements that collaborate to deliver a cohesive capability.
+        A [[System]] may consist of 0 to many [[Subsystem]] elements and may include both
+        owned and external dependencies across multiple [[Boundary]] levels.
 
     - name: "Status"
       description: >
@@ -30,7 +37,7 @@ definitions:
 
     - name: "Framework"
       value: >
-        A collection of software that is a dependency of an [[App]].
+        A collection of software that is a dependency of software primitive, e.g. [[App]], [[Service]], [[Module]].
 
     - name: "Module"
       value: >
@@ -42,10 +49,17 @@ definitions:
         A sufficiently large collection of logic and functionality that it needs to be
         separately managed. Generally a collection of [[Module]] elements.
 
+    - name: "Layer"
+      value: >
+        An internal organizational boundary within a single [[App]] or [[Service]] used to group
+        related [[Module]], [[Framework]], [[Component]], [[Transport]], [[State]], and [[DataModel]]
+        elements. A [[Layer]] is not itself a process.
+
     - name: "Service"
       value: >
-        A networked piece of logic which might consist of multiple [[Subsystem]] and/or [[Module]] elements.
-        Services interact with external systems, APIs, or network resources.
+        A long-running process which might consist of multiple [[Subsystem]], [[Layer]], and/or [[Module]] elements.
+        Services interact with external systems, APIs, or network resources. A [[Service]] is distinct
+        from passive infrastructure layers and storage backends.  A function cannot be a service.
 
     - name: "Component"
       value: >
@@ -55,7 +69,7 @@ definitions:
     - name: "Page"
       value: >
         A screen shown to the user, composed of [[Component]] elements. An existing
-        concept from the selected [[Framework]].
+        concept from the selected [[Framework]].  Dashboards are a type of page.
 
     - name: "DataModel"
       value: >
@@ -64,7 +78,7 @@ definitions:
 
     - name: "Storage"
       value: >
-        The persistent capture of [[DataModel]], generally a database. Usually a [[Subsystem]].
+        The persistent capture of [[DataModel]], generally a database.
 
     - name: "State"
       value: >
@@ -72,14 +86,78 @@ definitions:
 
     - name: "Feature"
       value: >
-        A core operation, presentation, or behavior of the [[App]] that is essential to the user's experience.
+        A core operation, presentation, or behavior of the software primitive that is essential to the user's experience.
 
     - name: "Flourish"
       value: >
         A decorative or ergonomic enhancement layered on top of a [[Feature]]. Not required for core
         function — the underlying [[Feature]] is always accessible without it.
 
+    - name: "Transport"
+      value: >
+        A communication channel used to move messages/events between systems or processes
+        (for example websocket streams). Not a [[Service]] and not a [[Storage]] backend.
 
+    - name: "ExternalSystem"
+      value: >
+        A third-party platform or dependency outside the ownership boundary of an [[App]]
+        (for example identity providers, payment providers, or SaaS APIs). Interactions
+        with an [[ExternalSystem]] should occur through explicit [[Contract]] definitions.
+
+    - name: "Contract"
+      value: >
+        The explicit interface agreement between two boundaries (for example between
+        [[Service]] and [[ExternalSystem]], or between [[Layer]] elements), including
+        payload schema, required fields, and error semantics.
+
+    - name: "Event"
+      value: >
+        An immutable record that a meaningful fact occurred within the system (for example
+        user registered, payment settled, job completed). [[Event]] values are emitted
+        across [[Transport]] channels and/or persisted in [[Storage]] for replay and audit.
+
+    - name: "Workflow"
+      value: >
+        A multi-step orchestration that coordinates [[Module]], [[Service]], [[Event]], and
+        [[Contract]] interactions to complete a user or system outcome.
+
+    - name: "Cache"
+      value: >
+        A transient or bounded-lifetime data store used to reduce latency and repeated
+        retrieval cost. A [[Cache]] is distinct from durable [[Storage]] and may be rebuilt
+        from source-of-truth systems.
+
+    - name: "Policy"
+      value: >
+        A centralized set of rules or constraints that govern allowed behavior (for example
+        access rules, rate limits, or validation gates) across [[Workflow]] and [[Service]]
+        boundaries.
+
+    - name: "Boundary"
+      value: >
+        A trust, process, network, or responsibility separation line within the architecture.
+        [[Boundary]] definitions clarify ownership, data exposure, and credential handling
+        expectations between [[Layer]], [[Service]], and [[ExternalSystem]] elements.
+
+    - name: "Metric"
+      value: >
+        A numeric telemetry signal sampled over time (for example latency, throughput,
+        error rate, or queue depth) used to evaluate health and performance.
+
+    - name: "Log"
+      value: >
+        A timestamped diagnostic record describing execution context, decisions, and failures
+        within [[App]] runtime behavior.
+
+    - name: "Trace"
+      value: >
+        A correlated execution path across multiple operations and/or process boundaries that
+        links related [[Event]], [[Log]], and [[Metric]] signals for end-to-end analysis.
+
+    - name: "Keybinding"
+      value: >
+        A keyboard shortcut that triggers an action. 
+        
 general:
   name: General
   description: 'General information about the product'
